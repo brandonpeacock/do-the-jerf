@@ -425,8 +425,12 @@
     updateVolumeUI(vol);
     if (vol>=0.8) hazardBorder.classList.add('danger');
     initAudio();
+    // iOS Safari requires AudioContext to be resumed inside a user gesture
+    if (audioCtx && audioCtx.state === 'suspended') {
+      audioCtx.resume();
+    }
     // Small delay to let AudioContext init before playing
-    setTimeout(()=>{ playAudio(vol); }, 50);
+    setTimeout(()=>{ playAudio(vol); }, 80);
     if (vol>=VOL_MAX) { setTimeout(()=>{ if(!exploding)triggerExplosion(); },1200); }
     interval=setInterval(()=>{
       arousal+=Math.floor(Math.random()*200)+100;
