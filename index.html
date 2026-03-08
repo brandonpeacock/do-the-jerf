@@ -10,6 +10,18 @@
     :root { --red:#ff1a1a; --yellow:#ffe600; --dark:#0a0000; --glow:rgba(255,230,0,0.6); }
     body { background:var(--dark); min-height:100vh; display:flex; flex-direction:column; align-items:center; justify-content:center; font-family:'Share Tech Mono',monospace; overflow:hidden; position:relative; cursor:crosshair; }
     body::after { content:''; position:fixed; inset:0; background:repeating-linear-gradient(0deg,rgba(0,0,0,0.15) 0px,rgba(0,0,0,0.15) 1px,transparent 1px,transparent 3px); pointer-events:none; z-index:100; }
+    #ios-unlock {
+      display:none;
+      position:fixed; inset:0; z-index:99999;
+      background:#000;
+      flex-direction:column; align-items:center; justify-content:center;
+      gap:24px; text-align:center; padding:40px;
+      cursor:pointer;
+    }
+    #ios-unlock.show { display:flex; }
+    #ios-unlock h2 { font-family:'Black Ops One',cursive; color:var(--yellow); font-size:clamp(1.8rem,7vw,3rem); text-shadow:0 0 20px var(--glow); }
+    #ios-unlock p { color:#aaa; font-size:0.8rem; letter-spacing:0.15em; max-width:300px; line-height:1.8; }
+    #ios-unlock .tap-btn { background:var(--yellow); color:#000; font-family:'Black Ops One',cursive; font-size:1.2rem; padding:18px 40px; border:none; cursor:pointer; letter-spacing:0.1em; clip-path:polygon(12px 0%,100% 0%,calc(100% - 12px) 100%,0% 100%); animation:status-pulse 1s ease-in-out infinite; }
     #hazard-border { position:fixed; inset:0; border:28px solid transparent; border-image:repeating-linear-gradient(45deg,#ffe600 0px,#ffe600 20px,#111 20px,#111 40px) 28; pointer-events:none; z-index:50; opacity:0.7; }
     #flash { position:fixed; inset:0; background:var(--red); opacity:0; pointer-events:none; z-index:40; }
     #explode-overlay { display:none; position:fixed; inset:0; z-index:9000; pointer-events:none; overflow:hidden; }
@@ -64,6 +76,11 @@
   </style>
 </head>
 <body>
+<div id="ios-unlock">
+  <h2>⚠ TAP TO<br>UNLEASH<br>THE JERF ⚠</h2>
+  <p>Your device requires permission<br>to enable the Jerf audio system</p>
+  <button class="tap-btn" onclick="unlockAudio()">ACTIVATE</button>
+</div>
 <div id="explode-overlay">
   <canvas id="explode-canvas"></canvas>
   <div id="nuke-flash"></div>
@@ -107,10 +124,33 @@
 <script>
 
   // ── Audio: simple HTML5 audio element → Safari friendly ────────
-  const jerfAudio  = new Audio('Jerf audio.mp3');
-  jerfAudio.loop   = true;
+  // ── Audio setup ──────────────────────────────────────────────
+  const jerfAudio   = new Audio('Jerf_audio.mp3');
+  jerfAudio.loop    = true;
   jerfAudio.preload = 'auto';
-  let audioPlaying = false;
+  let audioPlaying  = false;
+
+  // ── iOS audio unlock ─────────────────────────────────────────
+  const iosUnlock = document.getElementById('ios-unlock');
+
+  function unlockAudio() {
+    jerfAudio.volume = 0;
+    jerfAudio.play().then(() => {
+      jerfAudio.pause();
+      jerfAudio.currentTime = 0;
+      jerfAudio.volume = 0;
+      iosUnlock.classList.remove('show');
+      musicStatus.textContent = '\u266a THE JERF THEME \u00b7 ARMED & READY';
+    }).catch(e => {
+      console.log('Unlock failed:', e);
+      iosUnlock.classList.remove('show');
+    });
+  }
+
+  // Show unlock screen on iOS/Safari
+  const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+    (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  if (isIOS) iosUnlock.classList.add('show');
 
   function initAudio() {
     // Calling load() inside a user gesture satisfies iOS autoplay policy
